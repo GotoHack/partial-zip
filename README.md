@@ -18,5 +18,5 @@ Using curl's partial downloading feature to retrieve selected portions of ZIP fi
 * Use cmake 2.6 or greater to create the Makefiles.
 * Requires libcurl and zlib.
 * Compile instructions:
-	+ `mkdir build && cd build`
-	+ `cmake .. && make`
+	+ `make`
+	
