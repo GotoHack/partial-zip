@@ -23,6 +23,8 @@ int main(int argc, char* argv[]) {
 
 	if(strstr(argv[1], "://") == NULL) {
 		strcpy(fname, "file://");
+	} else {
+		*fname = 0;
 	}
 
 	strcat(fname, argv[1]);
