@@ -9,7 +9,7 @@ void callback(ZipInfo* info, CDFile* file, size_t progress) {
 }
 
 int main(int argc, char* argv[]) {
-	if(3 > argc) {
+	if(2 > argc) {
 		fprintf(stderr, "%s <zipfile> <extract> [<outfile>]\r\n", argv[0]);
 		return -1;
 	}
@@ -28,6 +28,11 @@ int main(int argc, char* argv[]) {
 	ZipInfo* info = PartialZipInit(fname);
 	if(!info) {
 		fprintf(stderr, "Cannot open %s\n", fname);
+		return 0;
+	}
+
+	if(argc < 3) {
+		PartialZipListFiles(info);
 		return 0;
 	}
 
