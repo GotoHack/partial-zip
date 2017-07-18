@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <libgen.h>
 #include "common.h"
 #include "partial/partial.h"
 
@@ -15,11 +16,6 @@ int main(int argc, char* argv[]) {
 
 	char* extract = argv[2];
         char fname[strlen(argv[1]) + sizeof("file://")];
-	char* outfile = argv[2];
-
-	if(argc >= 4) {
-		outfile = argv[3];
-	}
 
 	if(strstr(argv[1], "://") == NULL) {
 		strcpy(fname, "file://");
@@ -33,6 +29,11 @@ int main(int argc, char* argv[]) {
 	if(!info) {
 		fprintf(stderr, "Cannot open %s\n", fname);
 		return 0;
+	}
+
+	char* outfile = argv[3];
+	if(argc < 4) {
+		outfile = basename(argv[2]);
 	}
 
 	PartialZipSetProgressCallback(info, callback);
