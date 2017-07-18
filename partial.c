@@ -75,7 +75,7 @@ static void flipFiles(ZipInfo* info)
 
 ZipInfo* PartialZipInit(const char* url)
 {
-	ZipInfo* info = (ZipInfo*) malloc(sizeof(ZipInfo));
+	ZipInfo* info = (ZipInfo*) calloc(1, sizeof(ZipInfo));
 	info->url = strdup(url);
 	info->centralDirectoryRecvd = 0;
 	info->centralDirectoryEndRecvd = 0;
