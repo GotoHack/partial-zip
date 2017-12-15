@@ -53,7 +53,7 @@ typedef void (*PartialZipProgressCallback)(ZipInfo* info, CDFile* file, size_t p
 struct ZipInfo {
 	char* url;
 	uint64_t length;
-	CURL* hIPSW;
+	CURL* hCurl;
 	char* centralDirectory;
 	size_t centralDirectoryRecvd;
 	EndOfCD* centralDirectoryDesc;
@@ -72,13 +72,12 @@ extern "C" {
 
 	CDFile* PartialZipListFiles(ZipInfo* info);
 
-	unsigned char* PartialZipGetFile(ZipInfo* info, CDFile* file);
+	unsigned char* PartialZipGetFile(ZipInfo* info, CDFile* file, char* sizeToDownload);
 
 	void PartialZipRelease(ZipInfo* info);
-	
+
 	void PartialZipSetProgressCallback(ZipInfo* info, PartialZipProgressCallback progressCallback);
 
 #ifdef __cplusplus
 }
 #endif
-

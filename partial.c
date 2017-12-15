@@ -82,23 +82,21 @@ ZipInfo* PartialZipInit(const char* url)
 	info->centralDirectoryDesc = NULL;
 	info->progressCallback = NULL;
 
-	info->hIPSW = curl_easy_init();
+	info->hCurl = curl_easy_init();
 
-	curl_easy_setopt(info->hIPSW, CURLOPT_URL, info->url);
-	curl_easy_setopt(info->hIPSW, CURLOPT_FOLLOWLOCATION, 1);
-	curl_easy_setopt(info->hIPSW, CURLOPT_NOBODY, 1);
-	curl_easy_setopt(info->hIPSW, CURLOPT_WRITEFUNCTION, dummyReceive);
+	curl_easy_setopt(info->hCurl, CURLOPT_URL, info->url);
+	curl_easy_setopt(info->hCurl, CURLOPT_FOLLOWLOCATION, 1);
+	curl_easy_setopt(info->hCurl, CURLOPT_NOBODY, 1);
+	curl_easy_setopt(info->hCurl, CURLOPT_WRITEFUNCTION, dummyReceive);
 
 	if(strncmp(info->url, "file://", 7) == 0)
 	{
-		char path[1024];
-		strcpy(path, info->url + 7);
-		char* filePath = (char*) curl_easy_unescape(info->hIPSW, path, 0,  NULL);
+		char* filePath = (char*) curl_easy_unescape(info->hCurl, info->url + 7, 0,  NULL);
 		FILE* f = fopen(filePath, "rb");
 		if(!f)
 		{
 			curl_free(filePath);
-			curl_easy_cleanup(info->hIPSW);
+			curl_easy_cleanup(info->hCurl);
 			free(info->url);
 			free(info);
 
@@ -113,10 +111,10 @@ ZipInfo* PartialZipInit(const char* url)
 	}
 	else
 	{
-		curl_easy_perform(info->hIPSW);
+		curl_easy_perform(info->hCurl);
 
 		double dFileLength;
-		curl_easy_getinfo(info->hIPSW, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &dFileLength);
+		curl_easy_getinfo(info->hCurl, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &dFileLength);
 		info->length = dFileLength;
 	}
 
@@ -132,12 +130,12 @@ ZipInfo* PartialZipInit(const char* url)
 
 	sprintf(sRange, "%" PRIu64 "-%" PRIu64, start, end);
 
-	curl_easy_setopt(info->hIPSW, CURLOPT_WRITEFUNCTION, receiveCentralDirectoryEnd);
-	curl_easy_setopt(info->hIPSW, CURLOPT_WRITEDATA, info);
-	curl_easy_setopt(info->hIPSW, CURLOPT_RANGE, sRange);
-	curl_easy_setopt(info->hIPSW, CURLOPT_HTTPGET, 1);
+	curl_easy_setopt(info->hCurl, CURLOPT_WRITEFUNCTION, receiveCentralDirectoryEnd);
+	curl_easy_setopt(info->hCurl, CURLOPT_WRITEDATA, info);
+	curl_easy_setopt(info->hCurl, CURLOPT_RANGE, sRange);
+	curl_easy_setopt(info->hCurl, CURLOPT_HTTPGET, 1);
 
-	curl_easy_perform(info->hIPSW);
+	curl_easy_perform(info->hCurl);
 
 	char* cur;
 	for(cur = info->centralDirectoryEnd; cur < (info->centralDirectoryEnd + (end - start - 1)); cur++)
@@ -171,11 +169,11 @@ ZipInfo* PartialZipInit(const char* url)
 		start = info->centralDirectoryDesc->CDOffset;
 		end = start + info->centralDirectoryDesc->CDSize - 1;
 		sprintf(sRange, "%" PRIu64 "-%" PRIu64, start, end);
-		curl_easy_setopt(info->hIPSW, CURLOPT_WRITEFUNCTION, receiveCentralDirectory);
-		curl_easy_setopt(info->hIPSW, CURLOPT_WRITEDATA, info);
-		curl_easy_setopt(info->hIPSW, CURLOPT_RANGE, sRange);
-		curl_easy_setopt(info->hIPSW, CURLOPT_HTTPGET, 1);
-		curl_easy_perform(info->hIPSW);
+		curl_easy_setopt(info->hCurl, CURLOPT_WRITEFUNCTION, receiveCentralDirectory);
+		curl_easy_setopt(info->hCurl, CURLOPT_WRITEDATA, info);
+		curl_easy_setopt(info->hCurl, CURLOPT_RANGE, sRange);
+		curl_easy_setopt(info->hCurl, CURLOPT_HTTPGET, 1);
+		curl_easy_perform(info->hCurl);
 
 		flipFiles(info);
 
@@ -183,7 +181,7 @@ ZipInfo* PartialZipInit(const char* url)
 	}
 	else
 	{
-		curl_easy_cleanup(info->hIPSW);
+		curl_easy_cleanup(info->hCurl);
 		free(info->url);
 		free(info);
 		return NULL;
@@ -231,7 +229,7 @@ CDFile* PartialZipListFiles(ZipInfo* info)
 	return NULL;
 }
 
-unsigned char* PartialZipGetFile(ZipInfo* info, CDFile* file)
+unsigned char* PartialZipGetFile(ZipInfo* info, CDFile* file, char* sizeToDownload)
 {
 	LocalFile localHeader;
 	LocalFile* pLocalHeader = &localHeader;
@@ -243,13 +241,13 @@ unsigned char* PartialZipGetFile(ZipInfo* info, CDFile* file)
 
 	void* pFileHeader[] = {pLocalHeader, NULL, NULL, NULL};
 
-	curl_easy_setopt(info->hIPSW, CURLOPT_URL, info->url);
-	curl_easy_setopt(info->hIPSW, CURLOPT_FOLLOWLOCATION, 1);
-	curl_easy_setopt(info->hIPSW, CURLOPT_WRITEFUNCTION, receiveData);
-	curl_easy_setopt(info->hIPSW, CURLOPT_WRITEDATA, &pFileHeader);
-	curl_easy_setopt(info->hIPSW, CURLOPT_RANGE, sRange);
-	curl_easy_setopt(info->hIPSW, CURLOPT_HTTPGET, 1);
-	curl_easy_perform(info->hIPSW);
+    curl_easy_setopt(info->hCurl, CURLOPT_URL, info->url);
+	curl_easy_setopt(info->hCurl, CURLOPT_FOLLOWLOCATION, 1);
+	curl_easy_setopt(info->hCurl, CURLOPT_WRITEFUNCTION, receiveData);
+	curl_easy_setopt(info->hCurl, CURLOPT_WRITEDATA, &pFileHeader);
+	curl_easy_setopt(info->hCurl, CURLOPT_RANGE, sRange);
+	curl_easy_setopt(info->hCurl, CURLOPT_HTTPGET, 1);
+	curl_easy_perform(info->hCurl);
 
 	FLIPENDIANLE(localHeader.signature);
 	FLIPENDIANLE(localHeader.versionExtract);
@@ -263,6 +261,11 @@ unsigned char* PartialZipGetFile(ZipInfo* info, CDFile* file)
 	FLIPENDIANLE(localHeader.lenFileName);
 	FLIPENDIANLE(localHeader.lenExtra);
 
+	if(sizeToDownload != NULL) {
+		file->compressedSize = atoi(sizeToDownload);
+		file->size = atoi(sizeToDownload);
+	}
+
 	unsigned char* fileData = (unsigned char*) malloc(file->compressedSize);
 	size_t progress = 0;
 	void* pFileData[] = {fileData, info, file, &progress};
@@ -271,11 +274,11 @@ unsigned char* PartialZipGetFile(ZipInfo* info, CDFile* file)
 	end = start + file->compressedSize - 1;
 	sprintf(sRange, "%" PRIu64 "-%" PRIu64, start, end);
 
-	curl_easy_setopt(info->hIPSW, CURLOPT_WRITEFUNCTION, receiveData);
-	curl_easy_setopt(info->hIPSW, CURLOPT_WRITEDATA, pFileData);
-	curl_easy_setopt(info->hIPSW, CURLOPT_RANGE, sRange);
-	curl_easy_setopt(info->hIPSW, CURLOPT_HTTPGET, 1);
-	curl_easy_perform(info->hIPSW);
+	curl_easy_setopt(info->hCurl, CURLOPT_WRITEFUNCTION, receiveData);
+	curl_easy_setopt(info->hCurl, CURLOPT_WRITEDATA, pFileData);
+	curl_easy_setopt(info->hCurl, CURLOPT_RANGE, sRange);
+	curl_easy_setopt(info->hCurl, CURLOPT_HTTPGET, 1);
+	curl_easy_perform(info->hCurl);
 
 	if(file->method == 8)
 	{
@@ -307,7 +310,7 @@ void PartialZipSetProgressCallback(ZipInfo* info, PartialZipProgressCallback pro
 
 void PartialZipRelease(ZipInfo* info)
 {
-	curl_easy_cleanup(info->hIPSW);
+	curl_easy_cleanup(info->hCurl);
 	free(info->centralDirectory);
 	free(info->url);
 	free(info);
