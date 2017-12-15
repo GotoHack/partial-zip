@@ -4,7 +4,7 @@ Using curl's partial downloading feature to retrieve selected portions of ZIP fi
 
 ## Usage
 
-    ./partialzip <ZipURL> <RemotePath> <LocalPath> [numBytes]
+    ./partialzip <ZipURL> <RemotePath> [<outfile>] [sizeToDownload]
 
 ### Examples
 
@@ -15,8 +15,7 @@ Using curl's partial downloading feature to retrieve selected portions of ZIP fi
 
 --
 * First example will only download 1024 bytes of `038-5307-151.dmg`.
-* Use cmake 2.6 or greater to create the Makefiles.
 * Requires libcurl and zlib.
 * Compile instructions:
-	+ `make`
-	
+	$ make
+
